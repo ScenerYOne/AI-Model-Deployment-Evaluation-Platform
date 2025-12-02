@@ -106,10 +106,10 @@ function App() {
             </label>
             {modelFile && !currentModelId && (
               <button onClick={handleModelUpload} disabled={isUploadingModel} className="action-btn w-full mt-4">
-                {isUploadingModel ? "กำลังโหลดโมเดล..." : "โหลดโมเดลขึ้นเซิร์ฟเวอร์"}
+                {isUploadingModel ? "Uploading Model" : "Upload Model to Server"}
               </button>
             )}
-            {currentModelId && <div className="text-green-400 text-sm mt-2 text-center">โมเดลพร้อมใช้งาน</div>}
+            {currentModelId && <div className="text-green-400 text-sm mt-2 text-center">Model Ready to Use</div>}
           </div>
 
           {/* อัปโหลดภาพ */}
@@ -131,7 +131,7 @@ function App() {
             className="action-btn w-full"
           >
             <Zap className="w-10 h-10" />
-            {isPredicting ? "Analyzing..." : "Run Inference"}
+            {isPredicting ? "Analyzing" : "Run Inference"}
           </button>
         </div>
 
