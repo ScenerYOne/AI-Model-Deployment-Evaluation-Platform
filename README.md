@@ -1,4 +1,4 @@
-#  AppTestModel - Hydroponic Vegetable Detection
+#  AI Model Deployment Platform - Hydroponic Vegetable Detection
 
 ![Python](https://img.shields.io/badge/Python-3.9-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.95-009688?logo=fastapi&logoColor=white)
