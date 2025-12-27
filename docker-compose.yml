@@ -1,0 +1,32 @@
+services:
+  backend:
+    container_name: yolo-backend
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/uploaded_models:/app/uploaded_models
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  frontend:
+    container_name: yolo-frontend
+    build:
+      context: ./frontend/app_testmodel
+    env_file:
+      - ./frontend/app_testmodel/.env
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    restart: unless-stopped
