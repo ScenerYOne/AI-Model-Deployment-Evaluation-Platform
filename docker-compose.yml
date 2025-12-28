@@ -1,16 +1,11 @@
 services:
-  backend:
+  backend-yolo:
     container_name: yolo-backend
     build:
-      context: ./backend
-    env_file:
-      - ./backend/.env
-    ports:
-      - "8000:8000"
+      context: ./backend-yolo
     volumes:
-      - ./backend/uploaded_models:/app/uploaded_models
+      - ./backend-yolo/uploaded_models:/app/uploaded_models
     restart: unless-stopped
-
     deploy:
       resources:
         reservations:
@@ -19,14 +14,31 @@ services:
               count: all
               capabilities: [gpu]
 
+  backend-keras:
+    container_name: keras-backend
+    build:
+      context: ./backend-keras
+    volumes:
+      - ./backend-keras/uploaded_models:/app/uploaded_models
+    restart: unless-stopped
+
   frontend:
-    container_name: yolo-frontend
+    container_name: model-frontend
     build:
       context: ./frontend/app_testmodel
-    env_file:
-      - ./frontend/app_testmodel/.env
+    restart: unless-stopped
+
+  nginx:
+    container_name: model-nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     ports:
-      - "5173:5173"
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - backend
+      - frontend
+      - backend-yolo
+      - backend-keras
     restart: unless-stopped

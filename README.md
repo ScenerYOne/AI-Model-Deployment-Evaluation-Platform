@@ -4,10 +4,15 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.95-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)
 ![YOLOv8](https://img.shields.io/badge/YOLO-Ultralytics-blueviolet)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-Keras-FF6F00?logo=tensorflow&logoColor=white)
 ![ONNX](https://img.shields.io/badge/ONNX-Runtime-005CED?logo=onnx&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Supported-2496ED?logo=docker&logoColor=white)
 
-A **universal web-based platform** for testing and evaluating YOLO models across any detection task. Originally developed for hydroponic vegetable monitoring, this system has evolved into a **generic AI model tester** that supports all YOLO-based object detection projects without code modification.
+A **universal web-based platform** for testing and evaluating AI models across multiple frameworks. Originally developed for hydroponic vegetable monitoring, this system has evolved into a **generic AI model tester** that supports:
+- **YOLO-based object detection** (`.pt` and `.onnx` formats)
+- **Keras/TensorFlow models** (`.h5` and `.keras` formats) for classification, regression, and time-series tasks
+
+All without code modification.
 
 ---
 
@@ -15,16 +20,21 @@ A **universal web-based platform** for testing and evaluating YOLO models across
 
 **AppTestModel** was initially created out of necessity for rapid testing and performance evaluation of models in the **Hydroponic Vegetable Detection** project. The goal was to quickly analyze Confidence Scores, verify Bounding Box accuracy, and fine-tune model parameters in real-time.
 
-However, during development, we realized this system could extend its capabilities to support other tasks without code modification. This led to architectural improvements, transforming it into a **Universal Model Testing Platform** that works with any YOLO model type.
+However, during development, we realized this system could extend its capabilities to support other tasks and frameworks without code modification. This led to architectural improvements, transforming it into a **Universal Model Testing Platform** that works with:
+- **YOLO models** for object detection tasks
+- **Keras/TensorFlow models** for classification, regression, and time-series prediction tasks
 
 ###  Core Design Philosophy
 
 The system is built on the **"Zero Configuration for New Models"** principle, meaning:
 
 -  **No Code Modification Required:** Upload a new model and use it immediately
--  **Auto Class Detection:** System automatically extracts class names from model metadata
--  **Dynamic Color Mapping:** Bounding box colors are automatically assigned based on Class ID
--  **Multi-Format Support:** Supports both `.pt` (PyTorch) and `.onnx` (Optimized Runtime)
+-  **Auto Class Detection:** System automatically extracts class names from model metadata (YOLO) or infers task type (Keras)
+-  **Dynamic Color Mapping:** Bounding box colors are automatically assigned based on Class ID (YOLO models)
+-  **Multi-Format Support:** 
+  - **YOLO Models:** `.pt` (PyTorch) and `.onnx` (Optimized Runtime)
+  - **Keras Models:** `.h5` (HDF5) and `.keras` (Keras 3.0+ format)
+-  **Multi-Framework Support:** Dual backend architecture supporting both Ultralytics YOLO and TensorFlow/Keras
 
 ---
 
@@ -56,18 +66,25 @@ This project represents the final stage of a complete AI development workflow, c
 ### 3️⃣ Model Deployment Platform (This Repository)
 [ScenerYOne/AI-Model-Deployment-Evaluation-Platform](https://github.com/ScenerYOne/AI-Model-Deployment-Evaluation-Platform)
 
-- **Web-Based YOLO Testing:** Test models through browser without software installation  
-- **FastAPI Backend:** Automatic inference and memory management  
-- **React Frontend:** Fast-responding and user-friendly UI  
-- **Real-Time Detection:** Instant display of Bounding Boxes with Class Labels and Confidence Scores  
+- **Web-Based Model Testing:** Test YOLO and Keras models through browser without software installation  
+- **Dual Backend Architecture:** Separate FastAPI services for YOLO (object detection) and Keras (classification/regression)  
+- **Automatic Inference & Memory Management:** Smart LRU cache for both model types  
+- **React Frontend:** Fast-responding and user-friendly UI with unified interface  
+- **Real-Time Results:** Instant display of Bounding Boxes (YOLO) or Classification Results (Keras)  
 - **Multi-User Support:** Multiple users can test different models simultaneously  
 
 ---
 
 ## 🔁 Full System Workflow
 
+### YOLO Workflow
 ```
-Raw Images → Preprocessing → Labeled Dataset → Model Training → ONNX Export → Deployment Testing (This Platform)
+Raw Images → Preprocessing → Labeled Dataset → YOLO Training → ONNX Export → Deployment Testing (This Platform)
+```
+
+### Keras Workflow
+```
+Raw Data → Data Preprocessing → Model Training (Keras/TensorFlow) → Model Export (.h5/.keras) → Deployment Testing (This Platform)
 ```
 
 ---
@@ -76,8 +93,12 @@ Raw Images → Preprocessing → Labeled Dataset → Model Training → ONNX Exp
 
 ###  Universal Compatibility
 
-- **Multi-Format Support:** Supports both **PyTorch (`.pt`)** files for development and debugging, and **ONNX (`.onnx`)** for high-speed inference testing suitable for production deployment
-- **Automatic Class Detection:** System reads metadata from models and automatically extracts class names for display, regardless of how many classes or what their names are (e.g., `['car', 'person']` or `['healthy', 'disease_a', 'disease_b']`)
+- **Multi-Format Support:** 
+  - **YOLO Models:** Supports **PyTorch (`.pt`)** files for development and debugging, and **ONNX (`.onnx`)** for high-speed inference testing suitable for production deployment
+  - **Keras Models:** Supports **HDF5 (`.h5`)** format (legacy) and **Keras 3.0+ (`.keras`)** format (modern) for classification, regression, and time-series tasks
+- **Automatic Task Detection:** 
+  - **YOLO:** System reads metadata from models and automatically extracts class names for display, regardless of how many classes or what their names are (e.g., `['car', 'person']` or `['healthy', 'disease_a', 'disease_b']`)
+  - **Keras:** System automatically detects task type (classification, regression, time-series) from model output shape and adapts visualization accordingly
 - **Zero Code Modification:** Upload new models and use immediately without modifying code or config files
 
 ###  Performance & Scalability
@@ -88,9 +109,15 @@ Raw Images → Preprocessing → Labeled Dataset → Model Training → ONNX Exp
 
 ###  Visualization & Analysis
 
-- **Dynamic Bounding Box Colors:** Automatically separates box colors by Class ID from the predefined `CLASS_COLORS` list for clear result visualization
-- **Confidence Score Display:** Shows confidence values on each Bounding Box for model confidence analysis
-- **Instant Visual Feedback:** Results display immediately as Base64-encoded images with Detection Summary (number of objects detected per class)
+- **YOLO Models:**
+  - **Dynamic Bounding Box Colors:** Automatically separates box colors by Class ID from the predefined `CLASS_COLORS` list for clear result visualization
+  - **Confidence Score Display:** Shows confidence values on each Bounding Box for model confidence analysis
+  - **Detection Summary:** Displays count of detected objects per class
+- **Keras Models:**
+  - **Classification Results:** Shows predicted class with confidence score overlaid on image
+  - **Regression Results:** Displays predicted numerical value
+  - **Time-Series Results:** Returns predicted sequence values
+- **Instant Visual Feedback:** Results display immediately as Base64-encoded images with task-specific summaries
 
 ---
 
@@ -100,9 +127,10 @@ The system operates under a highly flexible **Stateless Backend** architecture t
 
 ### Inference Pipeline
 
+#### YOLO Backend (Object Detection)
 ```
 1. Upload Phase
-   User uploads model → Backend saves to /uploaded_models/
+   User uploads .pt/.onnx model → Backend saves to /uploaded_models/
    → Loads model into RAM/GPU → Extracts class names from metadata
    → Returns model_id and class_names to frontend
 
@@ -116,14 +144,40 @@ The system operates under a highly flexible **Stateless Backend** architecture t
    → Unload least recently used model → Free up memory
 ```
 
+#### Keras Backend (Classification/Regression/Time-Series)
+```
+1. Upload Phase
+   User uploads .h5/.keras model → Backend saves to /uploaded_models/
+   → Loads model into RAM → Infers input size and task type from model architecture
+   → Returns model_id and model_format to frontend
+
+2. Prediction Phase
+   User uploads image/data + model_id → Backend retrieves model from cache
+   → Preprocesses input (resize, normalize) → Runs Keras inference
+   → Detects task type (classification/regression/time-series) → Formats output accordingly
+   → Returns Base64-encoded image (classification) or numerical results (regression/time-series)
+
+3. Memory Management
+   Monitor RAM usage → If threshold exceeded
+   → Unload least recently used model → Clear TensorFlow session → Free up memory
+```
+
 ### Technical Stack
 
-**Backend:**
+**Backend (YOLO Service):**
 - **FastAPI:** High-performance async API framework
 - **Ultralytics YOLO:** Native support for YOLOv8/YOLOv11
 - **ONNX Runtime:** Optimized inference engine for production
 - **OpenCV:** Image processing and visualization
+- **PyTorch:** GPU acceleration support
 - **Python 3.9+:** Core runtime environment
+
+**Backend (Keras Service):**
+- **FastAPI:** High-performance async API framework
+- **TensorFlow/Keras:** Native support for Keras models (.h5, .keras)
+- **OpenCV:** Image preprocessing and visualization
+- **NumPy:** Numerical operations
+- **Python 3.11+:** Core runtime environment
 
 **Frontend:**
 - **React 18:** Modern component-based UI
@@ -132,8 +186,8 @@ The system operates under a highly flexible **Stateless Backend** architecture t
 - **CSS3:** Responsive styling with Flexbox/Grid
 
 **DevOps:**
-- **Docker & Docker Compose:** Containerized deployment
-- **Nginx Proxy (optional):** For production load balancing
+- **Docker & Docker Compose:** Containerized deployment with multi-service architecture
+- **Nginx Reverse Proxy:** Routes requests to appropriate backend (YOLO or Keras) based on API path
 - **Railway/Render:** Cloud deployment ready
 
 ---
@@ -173,10 +227,15 @@ While this project originated from Hydroponic Vegetable Monitoring, the system a
 
 ###  Why It Works Universally
 
-1. **Metadata-Driven System:** System reads class names directly from model files, not hard-coded in the source
-2. **Flexible Color Palette:** `CLASS_COLORS` list contains enough colors for multi-class models; for very large class counts (20-80 classes), colors can be easily added
-3. **Format Agnostic:** Supports both `.pt` and `.onnx`, the standard YOLO formats
-4. **Session-Based Isolation:** Each user has their own `model_id`, enabling simultaneous testing of different models
+1. **Metadata-Driven System:** 
+   - **YOLO:** System reads class names directly from model files, not hard-coded in the source
+   - **Keras:** System infers task type and input requirements from model architecture
+2. **Flexible Color Palette:** `CLASS_COLORS` list contains enough colors for multi-class YOLO models; for very large class counts (20-80 classes), colors can be easily added
+3. **Format Agnostic:** 
+   - **YOLO:** Supports both `.pt` and `.onnx`, the standard YOLO formats
+   - **Keras:** Supports both `.h5` (legacy) and `.keras` (modern) formats
+4. **Session-Based Isolation:** Each user has their own `model_id`, enabling simultaneous testing of different models across both backends
+5. **Dual Backend Architecture:** Separate services for YOLO and Keras allow independent scaling and optimization
 
 ---
 
@@ -184,12 +243,17 @@ While this project originated from Hydroponic Vegetable Monitoring, the system a
 
 ```text
 APP_TESTMODEL/
-├── backend/
+├── backend-yolo/
 │   ├── uploaded_models/      # Storage for uploaded .pt/.onnx models
-│   ├── server.py             # FastAPI backend (main entry point)
-│   ├── .env                  # Backend environment variables
-│   ├── requirements.txt      # Python dependencies (FastAPI, Ultralytics, ONNX, OpenCV)
-│   └── Dockerfile            # Backend container image
+│   ├── server.py             # FastAPI backend for YOLO models
+│   ├── requirements.txt      # Python dependencies (FastAPI, Ultralytics, ONNX, OpenCV, PyTorch)
+│   └── Dockerfile            # YOLO backend container image
+│
+├── backend-keras/
+│   ├── uploaded_models/      # Storage for uploaded .h5/.keras models
+│   ├── server.py             # FastAPI backend for Keras models
+│   ├── requirements.txt      # Python dependencies (FastAPI, TensorFlow, OpenCV, NumPy)
+│   └── Dockerfile            # Keras backend container image
 │
 ├── frontend/app_testmodel/
 │   ├── src/
@@ -207,11 +271,15 @@ APP_TESTMODEL/
 │   ├── index.html            # HTML entry point
 │   └── Dockerfile            # Frontend container image
 │
+├── nginx/
+│   ├── nginx.conf            # Nginx reverse proxy configuration
+│   └── Dockerfile            # Custom nginx image
+│
 ├── .dist/                    # Production build output (compiled frontend)
 ├── .pycache/                 # Python bytecode cache
 ├── node_modules/             # Node.js dependencies
 ├── .gitignore                # Git ignore rules
-├── docker-compose.yml        # Docker orchestration (frontend + backend)
+├── docker-compose.yml        # Docker orchestration (frontend + backend-yolo + backend-keras + nginx)
 ├── railway.json              # Railway deployment configuration
 └── README.md                 # Project documentation (this file)
 ```
@@ -229,8 +297,13 @@ We recommend using Conda for environment management to avoid dependency conflict
 conda create -n app_testmodel python=3.9
 conda activate app_testmodel
 
-# Install dependencies
-pip install fastapi uvicorn ultralytics opencv-python numpy python-multipart onnxruntime
+# Install YOLO backend dependencies
+cd backend-yolo
+pip install fastapi uvicorn ultralytics opencv-python numpy python-multipart onnxruntime torch
+
+# Install Keras backend dependencies
+cd ../backend-keras
+pip install fastapi uvicorn tensorflow opencv-python-headless numpy python-multipart
 ```
 
 ### 2. Frontend Setup (React)
@@ -250,26 +323,38 @@ npm install
 
 Suitable for development and code debugging:
 
-#### Terminal 1: Start Backend Server
+#### Terminal 1: Start YOLO Backend Server
 
 ```bash
-# Run from the root directory (D:\APP_TESTMODEL)
+# Run from the backend-yolo directory
+cd backend-yolo
 conda activate app_testmodel
 python -m uvicorn server:app --reload --host 127.0.0.1 --port 8000
 ```
 
-#### Terminal 2: Start Frontend Client
+#### Terminal 2: Start Keras Backend Server
 
 ```bash
-# Run from the app_testmodel directory (D:\APP_TESTMODEL\app_testmodel)
-cd app_testmodel
+# Run from the backend-keras directory
+cd backend-keras
+conda activate app_testmodel
+python -m uvicorn server:app --reload --host 127.0.0.1 --port 8001
+```
+
+#### Terminal 3: Start Frontend Client
+
+```bash
+# Run from the app_testmodel directory (D:\APP_TESTMODEL\frontend\app_testmodel)
+cd frontend/app_testmodel
 npm run dev
 ```
 
 **Access Points:**
 - Frontend UI: [http://localhost:5173](http://localhost:5173)
-- Backend API: [http://localhost:8000](http://localhost:8000)
-- Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+- YOLO Backend API: [http://localhost:8000](http://localhost:8000)
+- Keras Backend API: [http://localhost:8001](http://localhost:8001)
+- YOLO Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Keras Swagger Docs: [http://localhost:8001/docs](http://localhost:8001/docs)
 
 ---
 
@@ -291,38 +376,68 @@ docker compose up --build
 - ✅ **Isolated Network:** Frontend and backend communicate via Docker internal network
 
 **Access Points:**
-- Frontend UI: [http://localhost:5173](http://localhost:5173)
-- Backend API: [http://localhost:8000](http://localhost:8000)
-- API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+- Frontend UI: [http://localhost](http://localhost) (via Nginx on port 80)
+- YOLO Backend API: [http://localhost/api/yolo/](http://localhost/api/yolo/)
+- Keras Backend API: [http://localhost/api/keras/](http://localhost/api/keras/)
+- YOLO API Docs: [http://localhost/api/yolo/docs](http://localhost/api/yolo/docs)
+- Keras API Docs: [http://localhost/api/keras/docs](http://localhost/api/keras/docs)
 
 ---
 
 ##  How to Use
 
-1. **Open Browser:** Navigate to [http://localhost:5173](http://localhost:5173)
-2. **Upload Model:** Click "Upload Model" button to select your YOLO model file (`.pt` or `.onnx`)
+### For YOLO Models (Object Detection)
+
+1. **Open Browser:** Navigate to [http://localhost](http://localhost) (Docker) or [http://localhost:5173](http://localhost:5173) (Manual)
+2. **Select Backend:** Choose "YOLO Backend" from the backend selector
+3. **Upload Model:** Click "Upload Model" button to select your YOLO model file (`.pt` or `.onnx`)
    - System will load the model into RAM and display extracted class names
-3. **Upload Image:** Select test image (supports JPG, PNG, BMP)
-4. **Run Inference:** Click "Predict" button to process
-5. **View Results:** Image displays with:
+4. **Upload Image:** Select test image (supports JPG, PNG, BMP)
+5. **Run Inference:** Click "Predict" button to process
+6. **View Results:** Image displays with:
    - Color-coded Bounding Boxes by class
    - Class Names and Confidence Scores
    - Detection Summary (count of detected objects per class)
+
+### For Keras Models (Classification/Regression/Time-Series)
+
+1. **Open Browser:** Navigate to [http://localhost](http://localhost) (Docker) or [http://localhost:5173](http://localhost:5173) (Manual)
+2. **Select Backend:** Choose "Keras Backend" from the backend selector
+3. **Upload Model:** Click "Upload Model" button to select your Keras model file (`.h5` or `.keras`)
+   - System will load the model and detect task type (classification/regression/time-series)
+4. **Upload Image/Data:** 
+   - For image models: Select test image (supports JPG, PNG, BMP)
+   - For non-image models: System will use default input
+5. **Run Inference:** Click "Predict" button to process
+6. **View Results:**
+   - **Classification:** Image with predicted class and confidence score
+   - **Regression:** Numerical value prediction
+   - **Time-Series:** Sequence of predicted values
 
 ---
 
 ##  API Reference
 
-Backend exposes the following REST API endpoints:
+### YOLO Backend API (`/api/yolo/`)
+
+The YOLO backend exposes the following REST API endpoints:
 
 | Method | Endpoint | Description | Request Body | Response |
 |:---|:---|:---|:---|:---|
 | **POST** | `/upload-model` | Upload `.pt` or `.onnx` model file | `file: File` (multipart/form-data) | `{ model_id: str, class_names: List[str] }` |
-| **POST** | `/predict` | Process image with specified model | `file: File, model_id: str` | `{ image: Base64, detections: Dict }` |
-| **GET** | `/models` | List models currently loaded in memory | - | `{ models: List[str] }` |
-| **DELETE** | `/model/{model_id}` | Remove model from memory | - | `{ status: str }` |
+| **POST** | `/predict` | Process image with specified model | `file: File, model_id: str` | `{ image: Base64, detections: List[Dict] }` |
+| **GET** | `/list-models` | List models currently loaded in memory | - | `{ loaded_count: int, models: List[Dict] }` |
 
-### Example: Upload Model (cURL)
+### Keras Backend API (`/api/keras/`)
+
+The Keras backend exposes the following REST API endpoints:
+
+| Method | Endpoint | Description | Request Body | Response |
+|:---|:---|:---|:---|:---|
+| **POST** | `/upload-model` | Upload `.h5` or `.keras` model file | `file: File` (multipart/form-data) | `{ model_id: str, model_format: str }` |
+| **POST** | `/predict` | Process image/data with specified model | `file: File (optional), model_id: str` | `{ task: str, image: Base64 (if classification), value: float (if regression), values: List[float] (if time-series) }` |
+
+### Example: Upload YOLO Model (cURL)
 
 ```bash
 curl -X POST "http://localhost:8000/upload-model" \
@@ -337,7 +452,7 @@ curl -X POST "http://localhost:8000/upload-model" \
 }
 ```
 
-### Example: Run Inference (Python)
+### Example: Run YOLO Inference (Python)
 
 ```python
 import requests
@@ -348,7 +463,38 @@ data = {'model_id': 'abc123'}
 response = requests.post('http://localhost:8000/predict', files=files, data=data)
 
 result = response.json()
-print(result['detections'])  # {'healthy': 5, 'disease_powdery_mildew': 2}
+print(result['detections'])  # [{'cls': 0, 'name': 'healthy', 'conf': 0.95}, ...]
+```
+
+### Example: Upload Keras Model (cURL)
+
+```bash
+curl -X POST "http://localhost:8001/upload-model" \
+  -F "file=@model.h5"
+```
+
+**Response:**
+```json
+{
+  "model_id": "def456",
+  "model_format": "h5",
+  "message": "Keras model loaded"
+}
+```
+
+### Example: Run Keras Inference (Python)
+
+```python
+import requests
+
+# For classification model
+files = {'file': open('test_image.jpg', 'rb')}
+data = {'model_id': 'def456'}
+response = requests.post('http://localhost:8001/predict', files=files, data=data)
+
+result = response.json()
+print(result['task'])  # "classification"
+print(result['predictions'])  # [{'class': 0, 'confidence': 0.92}]
 ```
 
 ---
@@ -358,13 +504,21 @@ print(result['detections'])  # {'healthy': 5, 'disease_powdery_mildew': 2}
 ### Docker-Based Architecture
 
 ```
-Browser (localhost:5173)
+Browser (localhost:80)
    ↓
-Vite Dev Server (Frontend Container)
-   ↓ /api/* proxy
-FastAPI Backend (yolo-backend:8000)
+Nginx Reverse Proxy
    ↓
-YOLO Model Inference (CPU/GPU)
+   ├─→ /api/yolo/* → YOLO Backend (backend-yolo:8000)
+   │                    ↓
+   │                 YOLO Model Inference (CPU/GPU)
+   │
+   ├─→ /api/keras/* → Keras Backend (backend-keras:8000)
+   │                     ↓
+   │                  Keras Model Inference (CPU)
+   │
+   └─→ / → Frontend (frontend:5173)
+              ↓
+           React App (Vite Dev Server)
 ```
 
 ### Environment Variables
@@ -375,11 +529,20 @@ YOLO Model Inference (CPU/GPU)
 VITE_API_BASE=/api
 ```
 
-#### Backend (`backend/.env`)
+#### YOLO Backend (`backend-yolo/.env`)
 
 ```env
-MAX_MODELS_IN_MEMORY=3
-MODEL_CACHE_SIZE_MB=2048
+MAX_LOADED_MODELS=3
+MODEL_DIR=uploaded_models
+YOLO_CONF=0.3
+YOLO_IOU=0.45
+```
+
+#### Keras Backend (`backend-keras/.env`)
+
+```env
+MAX_LOADED_MODELS=2
+MODEL_DIR=uploaded_models
 ```
 
 ### Vite Proxy Configuration
@@ -394,15 +557,22 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://yolo-backend:8000',  // Docker internal network
+      '/api/yolo': {
+        target: 'http://localhost:8000',  // YOLO backend
         changeOrigin: true,
-        rewrite: path => path.replace(/^\/api/, '')
+        rewrite: path => path.replace('/api/yolo', '')
+      },
+      '/api/keras': {
+        target: 'http://localhost:8001',  // Keras backend
+        changeOrigin: true,
+        rewrite: path => path.replace('/api/keras', '')
       }
     }
   }
 })
 ```
+
+**Note:** In Docker mode, Nginx handles routing automatically. The above proxy config is for manual development mode.
 
 **Benefits:**
 - ✅ Avoids CORS issues
@@ -450,8 +620,8 @@ services:
 
 | Mode | Frontend | Backend | Terminals | Dependencies | Use Case |
 |:---|:---|:---|:---:|:---|:---|
-| **Manual** | `npm run dev` | `uvicorn server:app` | 2 | Manual installation | Development & Debugging |
-| **Docker** | Docker Compose | Docker Compose | 1 | Auto-installed | Production & Deployment |
+| **Manual** | `npm run dev` | `uvicorn server:app` (2 backends) | 3 | Manual installation | Development & Debugging |
+| **Docker** | Docker Compose | Docker Compose (all services) | 1 | Auto-installed | Production & Deployment |
 
 **Recommendation:** Use Manual Mode when debugging code, but use Docker Mode for actual deployment
 
@@ -483,9 +653,10 @@ docker compose up --build
 **Cause:** Invalid model file or insufficient memory
 
 **Solution:**
-- Verify file is actually `.pt` or `.onnx`
+- **YOLO:** Verify file is actually `.pt` or `.onnx`
+- **Keras:** Verify file is actually `.h5` or `.keras`
 - Increase RAM for Docker Desktop (Settings → Resources → Memory)
-- Reduce `MAX_MODELS_IN_MEMORY` in backend `.env`
+- Reduce `MAX_LOADED_MODELS` in backend `.env` files
 
 #### 4. "ONNX Runtime not found"
 **Cause:** ONNX Runtime not installed
@@ -517,15 +688,30 @@ CLASS_COLORS = [
 
 ###  Completed Features
 
+#### YOLO Backend
 - [x] Support for YOLOv8 and YOLOv11
 - [x] Support for `.pt` (PyTorch) and `.onnx` (ONNX Runtime) files
 - [x] Automatic RAM management system (LRU Cache)
 - [x] Color-coded boxes by Class ID
-- [x] Multi-User Support
-- [x] Docker Deployment Ready
 - [x] Auto Class Name Detection
 - [x] Confidence Score Display
-- [x] FastAPI Documentation (Swagger UI)
+- [x] GPU/CPU auto-detection
+
+#### Keras Backend
+- [x] Support for `.h5` (HDF5) and `.keras` (Keras 3.0+) files
+- [x] Automatic task detection (classification/regression/time-series)
+- [x] Automatic input size inference from model architecture
+- [x] Support for image-based classification models
+- [x] Support for regression models
+- [x] Support for time-series prediction models
+- [x] Automatic RAM management system (LRU Cache with TensorFlow session clearing)
+
+#### Infrastructure
+- [x] Multi-User Support (both backends)
+- [x] Docker Deployment Ready with multi-service architecture
+- [x] Nginx reverse proxy for routing
+- [x] FastAPI Documentation (Swagger UI) for both backends
+- [x] Unified frontend interface for both model types
 
 
 ##  Contributing
@@ -551,6 +737,7 @@ Contributions are welcome! If you'd like to improve this project:
 
 ### Core AI Frameworks
 * **Ultralytics YOLO**: [https://docs.ultralytics.com/](https://docs.ultralytics.com/) 
+* **TensorFlow/Keras**: [https://www.tensorflow.org/](https://www.tensorflow.org/)
 * **ONNX Runtime**: [https://onnxruntime.ai/docs/](https://onnxruntime.ai/docs/) 
 * **OpenCV Python**: [https://docs.opencv.org/](https://docs.opencv.org/) 
 

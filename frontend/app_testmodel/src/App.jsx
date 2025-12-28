@@ -16,15 +16,32 @@ function App() {
   const [modelFormat, setModelFormat] = useState(null);
   const [modelHistory, setModelHistory] = useState([]);
 
-  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+  // ⭐ เพิ่ม state เดียว
+  const [modelApiBase, setModelApiBase] = useState(null);
 
+  // ===== backend router =====
+  const getApiBase = (filename) => {
+    const ext = filename.split(".").pop().toLowerCase();
+    if (["pt", "onnx"].includes(ext)) return "/api/yolo";
+    if (["h5", "keras"].includes(ext)) return "/api/keras";
+    return null;
+  };
+  
+
+  // ===== Upload Model =====
   const handleModelUpload = async () => {
-    if (!modelFile) return;
+    if (!modelFile || !modelApiBase) return;
     setIsUploadingModel(true);
+
     const formData = new FormData();
     formData.append("file", modelFile);
+
     try {
-      const res = await fetch(`${API_BASE}/upload-model`, { method: "POST", body: formData });
+      const res = await fetch(`${modelApiBase}/upload-model`, {
+        method: "POST",
+        body: formData,
+      });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Upload failed");
 
@@ -33,19 +50,20 @@ function App() {
       setModelFormat(data.model_format);
       setActiveModelName(modelFile.name);
 
-      setModelHistory((prev) => {
-        const exists = prev.find(m => m.model_id === data.model_id);
-        if (exists) return prev;
-        return [{
+      setModelHistory((prev) => [
+        {
           model_id: data.model_id,
           name: modelFile.name,
           format: data.model_format,
-          class_names: data.class_names,
-        }, ...prev].slice(0, 5);
-      });
+          class_names: data.class_names || [],
+          apiBase: modelApiBase, // ⭐ จำ backend
+        },
+        ...prev,
+      ]);
+
       setResultImage(null);
       setDetections([]);
-      alert(`โหลดโมเดลสำเร็จ`);
+      alert("โหลดโมเดลสำเร็จ");
     } catch (err) {
       alert("อัปโหลดโมเดลไม่สำเร็จ: " + err.message);
     } finally {
@@ -53,26 +71,35 @@ function App() {
     }
   };
 
+  // ===== Switch Model =====
   const switchModel = (model) => {
-    if (!model) return;
     setCurrentModelId(model.model_id);
     setClassNames(model.class_names || []);
     setModelFormat(model.format);
     setActiveModelName(model.name);
+    setModelApiBase(model.apiBase); // ⭐ สำคัญที่สุด
     setResultImage(null);
     setDetections([]);
   };
 
+  // ===== Predict =====
   const handlePredict = async () => {
-    if (!testFile || !currentModelId) return;
+    if (!testFile || !currentModelId || !modelApiBase) return;
     setIsPredicting(true);
+
     const formData = new FormData();
     formData.append("file", testFile);
     formData.append("model_id", currentModelId);
+
     try {
-      const res = await fetch(`${API_BASE}/predict`, { method: "POST", body: formData });
+      const res = await fetch(`${modelApiBase}/predict`, {
+        method: "POST",
+        body: formData,
+      });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Inference failed");
+
       setResultImage(`data:image/jpeg;base64,${data.image}`);
       setDetections(data.detections || []);
     } catch (err) {
@@ -83,10 +110,12 @@ function App() {
     }
   };
 
+  // ===== Upload Image =====
   const handleTestFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setTestFile(file);
+
     const reader = new FileReader();
     reader.onloadend = () => {
       setTestFilePreview(reader.result);
@@ -108,18 +137,26 @@ function App() {
           <h2 className="font-light mb-8 text-gray-300">Upload & Run</h2>
           <div className="mb-8">
             <label>
-              <input type="file" accept=".pt,.onnx,.pth" className="hidden" 
+              <input type="file" accept=".pt,.onnx,.pth,.h5,.keras" className="hidden" 
                 onChange={(e) => {
-                  if (e.target.files[0]) {
-                    setModelFile(e.target.files[0]);
-                    setActiveModelName(e.target.files[0].name);
-                    setCurrentModelId(null);
+                  const file = e.target.files[0];
+                  if (!file) return;
+
+                  const api = getApiBase(file.name);
+                  if (!api) {
+                    alert("ไม่รองรับไฟล์ประเภทนี้");
+                    return;
                   }
+
+                  setModelFile(file);
+                  setActiveModelName(file.name);
+                  setModelApiBase(api); 
+                  setCurrentModelId(null);
                 }} 
               />
               <div className="upload-box">
                 <Brain className="w-10 h-10 text-blue-500" />
-                <span className="upload-text">{activeModelName || "Upload Model (.pt / .onnx)"}</span>
+                <span className="upload-text">{activeModelName || "Upload Model "}</span>
               </div>
             </label>
             {modelFile && !currentModelId && (

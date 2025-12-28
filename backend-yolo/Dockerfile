@@ -11,7 +11,8 @@ RUN pip install --no-cache-dir \
     opencv-python-headless \
     onnx \
     onnxruntime \
-    onnxruntime-gpu
+    onnxruntime-gpu \
+    tensorflow
 
 COPY server.py .
 COPY uploaded_models uploaded_models000
