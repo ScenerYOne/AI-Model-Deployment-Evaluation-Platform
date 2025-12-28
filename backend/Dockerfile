@@ -6,10 +6,15 @@ RUN pip install --no-cache-dir \
     fastapi \
     uvicorn[standard] \
     python-multipart \
-    python-dotenv
+    python-dotenv \
+    ultralytics \
+    opencv-python-headless \
+    onnx \
+    onnxruntime \
+    onnxruntime-gpu
 
 COPY server.py .
-COPY uploaded_models uploaded_models
+COPY uploaded_models uploaded_models000
 
 EXPOSE 8000
 
