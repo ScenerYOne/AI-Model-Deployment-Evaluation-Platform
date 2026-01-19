@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      allowedHosts: [
+        "ai-model-deployment-evaluation-platform-1.onrender.com"
+      ],
       proxy: {
         "/api/yolo": {
           target: "http://localhost:8000",
