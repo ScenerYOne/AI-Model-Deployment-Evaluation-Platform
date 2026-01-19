@@ -15,19 +15,27 @@ function App() {
   const [classNames, setClassNames] = useState([]);
   const [modelFormat, setModelFormat] = useState(null);
   const [modelHistory, setModelHistory] = useState([]);
-
   const [modelApiBase, setModelApiBase] = useState(null);
 
- 
+  const CLOUD_API = import.meta.env.VITE_API_BASE;
+
   const getApiBase = (filename) => {
+    if (CLOUD_API) return CLOUD_API;
     const ext = filename.split(".").pop().toLowerCase();
     if (["pt", "onnx"].includes(ext)) return "/api/yolo";
     if (["h5", "keras"].includes(ext)) return "/api/keras";
     return null;
   };
-  
 
-  
+  const handleModelFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setModelFile(file);
+      const base = getApiBase(file.name);
+      setModelApiBase(base);
+    }
+  };
+
   const handleModelUpload = async () => {
     if (!modelFile || !modelApiBase) return;
     setIsUploadingModel(true);
@@ -55,7 +63,7 @@ function App() {
           name: modelFile.name,
           format: data.model_format,
           class_names: data.class_names || [],
-          apiBase: modelApiBase, // 
+          apiBase: modelApiBase,
         },
         ...prev,
       ]);
@@ -70,18 +78,16 @@ function App() {
     }
   };
 
-  // ===== Switch Model =====
   const switchModel = (model) => {
     setCurrentModelId(model.model_id);
     setClassNames(model.class_names || []);
     setModelFormat(model.format);
     setActiveModelName(model.name);
-    setModelApiBase(model.apiBase); 
+    setModelApiBase(model.apiBase);
     setResultImage(null);
     setDetections([]);
   };
 
-  
   const handlePredict = async () => {
     if (!testFile || !currentModelId || !modelApiBase) return;
     setIsPredicting(true);
@@ -91,7 +97,7 @@ function App() {
     formData.append("model_id", currentModelId);
 
     try {
-      const res = await fetch(`${__API_BASE__}/yolo/predict`, {
+      const res = await fetch(`${modelApiBase}/predict`, {
         method: "POST",
         body: formData,
       });
@@ -108,7 +114,6 @@ function App() {
     }
   };
 
-  
   const handleTestFileChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
