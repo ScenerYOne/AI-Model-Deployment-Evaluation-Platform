@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Zap, Image as ImageIcon, Brain, History } from "lucide-react";
+import Swal from "sweetalert2";
 import "./App.css";
 
 function App() {
@@ -17,11 +18,18 @@ function App() {
   const [modelHistory, setModelHistory] = useState([]);
   const [modelApiBase, setModelApiBase] = useState(null);
 
+  const VITE_YOLO_API = import.meta.env.VITE_YOLO_API;
+  const VITE_KERAS_API = import.meta.env.VITE_KERAS_API;
   const CLOUD_API = import.meta.env.VITE_API_BASE;
 
   const getApiBase = (filename) => {
-    if (CLOUD_API) return CLOUD_API;
     const ext = filename.split(".").pop().toLowerCase();
+    // Render / cloud: ใช้ URL แยกของแต่ละ backend ถ้ามี
+    if (["pt", "onnx"].includes(ext) && VITE_YOLO_API) return VITE_YOLO_API;
+    if (["h5", "keras"].includes(ext) && VITE_KERAS_API) return VITE_KERAS_API;
+    // VITE_API_BASE ตัวเดียว (ใช้เมื่อมี backend เดียว เช่น YOLO อย่างเดียว)
+    if (CLOUD_API && CLOUD_API !== "/api") return CLOUD_API;
+    // Docker/nginx: ใช้ path ตามนามสกุล
     if (["pt", "onnx"].includes(ext)) return "/api/yolo";
     if (["h5", "keras"].includes(ext)) return "/api/keras";
     return null;
@@ -40,6 +48,15 @@ function App() {
     if (!modelFile || !modelApiBase) return;
     setIsUploadingModel(true);
 
+    Swal.fire({
+      title: "กำลังอัปโหลดโมเดล...",
+      text: "ระบบกำลังส่งไฟล์ไปที่ Server โปรดรอสักครู่",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
     const formData = new FormData();
     formData.append("file", modelFile);
 
@@ -49,19 +66,29 @@ function App() {
         body: formData,
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Upload failed");
+      const text = await res.text();
+      let data = {};
+      if (text) {
+        try { data = JSON.parse(text); } catch { throw new Error("เซิร์ฟเวอร์ส่งข้อมูลผิดรูปแบบ (Backend อาจกำลังโหลดหรือ busy) ลองใหม่อีกครั้ง"); }
+      }
+      if (!res.ok) {
+        const msg = data.detail || data.message ||
+          (res.status === 502 ? "Backend ยังไม่พร้อม ลองใหม่อีกครั้ง" : res.status === 504 ? "หมดเวลา โมเดลใหญ่มากหรือเซิร์ฟเวอร์ busy" : `อัปโหลดไม่สำเร็จ (${res.status})`);
+        throw new Error(msg);
+      }
+
+      const detectedFormat = data.model_format || modelFile.name.split('.').pop();
 
       setCurrentModelId(data.model_id);
       setClassNames(data.class_names || []);
-      setModelFormat(data.model_format);
+      setModelFormat(detectedFormat);
       setActiveModelName(modelFile.name);
 
       setModelHistory((prev) => [
         {
           model_id: data.model_id,
           name: modelFile.name,
-          format: data.model_format,
+          format: detectedFormat,
           class_names: data.class_names || [],
           apiBase: modelApiBase,
         },
@@ -70,9 +97,19 @@ function App() {
 
       setResultImage(null);
       setDetections([]);
-      alert("โหลดโมเดลสำเร็จ");
+      
+      Swal.fire({
+        icon: "success",
+        title: "โหลดโมเดลสำเร็จ",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     } catch (err) {
-      alert("อัปโหลดโมเดลไม่สำเร็จ: " + err.message);
+      Swal.fire({
+        icon: "error",
+        title: "อัปโหลดไม่สำเร็จ",
+        text: err.message,
+      });
     } finally {
       setIsUploadingModel(false);
     }
@@ -92,6 +129,28 @@ function App() {
     if (!testFile || !currentModelId || !modelApiBase) return;
     setIsPredicting(true);
 
+    let timerInterval;
+    Swal.fire({
+      title: "กำลังประมวลผล...",
+      html: "โมเดลกำลังวิเคราะห์ภาพ คาดว่าจะเสร็จใน <b></b> วินาที",
+      timer: 15000,
+      timerProgressBar: true,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+        const b = Swal.getHtmlContainer().querySelector("b");
+        timerInterval = setInterval(() => {
+          const timeLeft = Swal.getTimerLeft();
+          if (timeLeft) {
+            b.textContent = (timeLeft / 1000).toFixed(0);
+          }
+        }, 100);
+      },
+      willClose: () => {
+        clearInterval(timerInterval);
+      },
+    });
+
     const formData = new FormData();
     formData.append("file", testFile);
     formData.append("model_id", currentModelId);
@@ -101,13 +160,26 @@ function App() {
         method: "POST",
         body: formData,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Inference failed");
+      const text = await res.text();
+      let data = {};
+      if (text) {
+        try { data = JSON.parse(text); } catch { throw new Error("เซิร์ฟเวอร์ส่งข้อมูลผิดรูปแบบ ลองใหม่อีกครั้ง"); }
+      }
+      if (!res.ok) {
+        const msg = data.detail || data.message ||
+          (res.status === 502 ? "Backend ยังไม่พร้อม" : res.status === 504 ? "หมดเวลา" : "Inference failed");
+        throw new Error(msg);
+      }
 
       setResultImage(`data:image/jpeg;base64,${data.image}`);
       setDetections(data.detections || []);
+      Swal.close();
     } catch (err) {
-      alert("ตรวจจับไม่สำเร็จ: " + err.message);
+      Swal.fire({
+        icon: "error",
+        title: "ตรวจจับไม่สำเร็จ",
+        text: "ระบบอาจกำลังเริ่มต้นใหม่ โปรดรอ 1 นาทีแล้วลองอีกครั้ง",
+      });
       setResultImage(testFilePreview);
     } finally {
       setIsPredicting(false);
@@ -135,7 +207,6 @@ function App() {
       </div>
 
       <div className="main-content">
-        {/* LEFT COLUMN */}
         <div>
           <h2 className="font-light mb-8 text-gray-300">Upload & Run</h2>
           <div className="mb-8">
@@ -147,7 +218,7 @@ function App() {
 
                   const api = getApiBase(file.name);
                   if (!api) {
-                    alert("ไม่รองรับไฟล์ประเภทนี้");
+                    Swal.fire("ข้อผิดพลาด", "ไม่รองรับไฟล์ประเภทนี้", "warning");
                     return;
                   }
 
@@ -168,7 +239,7 @@ function App() {
               </button>
             )}
             {currentModelId && (
-              <div className="text-green-400 text-sm mt-2 text-center">Model Ready to Use</div>
+              <div className="text-green-400 text-sm mt-2 text-center">Model Ready to Use ({modelFormat?.toUpperCase()})</div>
             )}
           </div>
 
@@ -191,16 +262,15 @@ function App() {
             <div className="stats-card mt-6">
               <div className="stats-title flex items-center gap-2"><History size={16} /> Model History</div>
               {modelHistory.map((m) => (
-                <div key={m.model_id} className={`stat-item cursor-pointer ${currentModelId === m.model_id ? "bg-gray-800" : ""}`} onClick={() => switchModel(m)}>
+                <div key={m.model_id} className={`stat-item cursor-pointer ${currentModelId === m.model_id ? "active-model" : ""}`} onClick={() => switchModel(m)}>
                   <span className="text-gray-200 text-sm truncate">{m.name}</span>
-                  <span className="text-cyan-400 text-xs">{m.format?.toUpperCase() || "N/A"}</span>
+                  <span className="text-cyan-400 text-xs">{m.format?.toUpperCase()}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* RIGHT COLUMN (RESULT ZONE) */}
         <div className="result-zone">
           <h3>Inference Results</h3>
           {(testFilePreview || resultImage) ? (

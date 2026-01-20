@@ -92,7 +92,7 @@ html, body, #root {
 /* Action Button */
 .action-btn {
   height: 10rem;
-  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  background: #397dea;
   border-radius: 0.75rem;
   font-weight: 600;
   font-size: 1.125rem;

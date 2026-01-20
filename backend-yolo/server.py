@@ -77,6 +77,7 @@ async def upload_model(file: UploadFile = File(...)):
         return {
             "model_id": model_id,
             "class_names": names,
+            "model_format": suffix.replace(".", ""),
             "message": "Model uploaded and loaded successfully"
         }
     except Exception as e:

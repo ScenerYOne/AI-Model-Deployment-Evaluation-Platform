@@ -26,6 +26,8 @@ services:
     container_name: model-frontend
     build:
       context: ./frontend/app_testmodel
+    volumes:
+      - ./frontend/app_testmodel/src:/app/src
     restart: unless-stopped
 
   nginx:

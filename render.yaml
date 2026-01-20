@@ -1,0 +1,26 @@
+services:
+  # ========== Backend YOLO (.pt, .onnx) ==========
+  - type: web
+    name: backend-yolo
+    runtime: docker
+    dockerfilePath: ./backend-yolo/Dockerfile
+    dockerContext: ./backend-yolo
+    envVars:
+      - key: PORT
+        generateValue: true
+
+  # ========== Backend Keras (.h5, .keras) ==========
+  - type: web
+    name: backend-keras
+    runtime: docker
+    dockerfilePath: ./backend-keras/Dockerfile
+    dockerContext: ./backend-keras
+    envVars:
+      - key: PORT
+        generateValue: true
+
+  # ========== Frontend (Static) ==========
+  - type: static
+    name: frontend
+    buildCommand: cd frontend/app_testmodel && npm install && npm run build
+    publishPath: frontend/app_testmodel/dist
